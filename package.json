@@ -1,0 +1,28 @@
+{
+  "name": "bbk31_proyecto_1_trello",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JosuneRG/BBK31_PROYECTO_1_trello.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JosuneRG/BBK31_PROYECTO_1_trello/issues"
+  },
+  "homepage": "https://github.com/JosuneRG/BBK31_PROYECTO_1_trello#readme",
+  "dependencies": {
+    "-": "^0.0.1",
+    "D": "^1.0.0",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.1",
+    "nodemon": "^3.1.10",
+    "sequelize": "^6.37.7"
+  }
+}
