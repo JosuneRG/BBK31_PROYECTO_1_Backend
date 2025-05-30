@@ -13,8 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-
- OrderProduct.init({
+   OrderProduct.init({
     order_id: {
       type: DataTypes.INTEGER,
       primaryKey: true

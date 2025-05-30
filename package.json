@@ -20,8 +20,10 @@
   "homepage": "https://github.com/JosuneRG/BBK31_PROYECTO_1_trello#readme",
   "dependencies": {
     "-": "^0.0.1",
+    "bcrypt": "^6.0.0",
     "D": "^1.0.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.1",
     "nodemon": "^3.1.10",
     "sequelize": "^6.37.7"

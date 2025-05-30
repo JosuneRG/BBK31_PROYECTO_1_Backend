@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  ProductCategory.init({
+ ProductCategory.init({
     product_id: {
       type: DataTypes.INTEGER,
       primaryKey: true
@@ -30,4 +30,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   return ProductCategory;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> product_C
