@@ -9,8 +9,8 @@ app.use(express.json());
 const db = mysql.createConnection({
   host : 'localhost',
   user : 'root',
-  password : '',
-  database: ''
+  password : 'root',
+  database: 'e-commerceDB'
 });
 
 // Conectar
