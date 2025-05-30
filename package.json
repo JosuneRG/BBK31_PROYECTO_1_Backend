@@ -1,9 +1,10 @@
 {
   "name": "bbk31_proyecto_1_trello",
   "version": "1.0.0",
-  "description": "",
+  "description": "API para gestión de productos y categorías usando Express y Sequeliz",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "dev": "nodemon index.js"
   },
   "repository": {

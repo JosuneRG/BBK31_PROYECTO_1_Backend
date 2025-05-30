@@ -1,27 +1,20 @@
+console.log("Iniciando servidor...");
+
 const express = require("express");
 const app = express();
 const port = 3000;
-const mysql = require('mysql2');
 
+//Se usa para que el servidor entienda JSON en las peticiones
 app.use(express.json());
 
-// Crear conexión SIN base de datos
-const db = mysql.createConnection({
-  host : 'localhost',
-  user : 'root',
-  password : 'root',
-  database: 'e-commerceDB'
+//Para importar las rutas
+const productRoutes = require('./routes/product');  // <-- aquí importas tus rutas de productos
+app.use('/api/productos', productRoutes); // <-- aquí dices que esas rutas respondan bajo /api/productos
+
+app.get("/", (req, res) => {
+  res.send("Servidor funcionando!");
 });
 
-// Conectar
-db.connect((err) => {
-  if (err) throw err;
-  console.log('✅ Conectado a MySQL');
-});
-
-
-// Iniciar el servidor
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });
-

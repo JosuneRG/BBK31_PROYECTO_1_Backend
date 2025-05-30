@@ -26,4 +26,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   return Order;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> product_C
