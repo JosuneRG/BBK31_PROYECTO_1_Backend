@@ -30,8 +30,4 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   return ProductCategory;
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> product_C
