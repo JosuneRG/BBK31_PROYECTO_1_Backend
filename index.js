@@ -3,6 +3,11 @@ console.log("Iniciando servidor...");
 const express = require("express");
 const app = express();
 const port = 3000;
+app.use(express.json());
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+
 
 //Se usa para que el servidor entienda JSON en las peticiones
 app.use(express.json());

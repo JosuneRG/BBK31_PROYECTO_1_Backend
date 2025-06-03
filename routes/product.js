@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const { authenticateToken } = require('../middleware/auth');
+const validateProduct = require('../middleware/validateProduct');
 
 
 //Ruta para crear la tabla 'Product' directamente con SQL
 router.get('/crear-tabla', productController.crearTablaProductos);
 
 // Crear producto
-router.post('/', productController.crearProducto);
+router.post('/', authenticateToken, validateProduct, productController.crearProducto);
+
 
 // Obtener todos los productos con categorías
 router.get('/', productController.obtenerProductos);
