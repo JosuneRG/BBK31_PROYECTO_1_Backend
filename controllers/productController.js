@@ -3,7 +3,26 @@ const { sequelize } = require('../models');
 
 
 module.exports = {
+//Obtener producto por ID con categorias
+  obtenerProductoPorId: async (req, res) => {
+    try {
+      const producto = await Producto.findByPk(req.params.id, {
+        include: {
+          model: Categoria,
+          as: 'categorias',
+          through: { attributes: [] }
+        }
+      });
 
+      if (!producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
+
+      res.json(producto);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 //Crear la tabla product usando SQL
  crearTablaProductos: async (req, res) => {
     const sql = `
@@ -26,7 +45,7 @@ module.exports = {
     }
   },
 
-// Crear producto con categorías (categorias es array de ids)
+// 1.Endpoint para crear producto 
   crearProducto: async (req, res) => {
     const { nombre, descripcion, precio, categorias } = req.body;
 
@@ -35,82 +54,96 @@ module.exports = {
     }
 
     try {
+      //Crear el producto
       const producto = await Producto.create({ nombre, descripcion, precio });
 
-      // Asociar categorías
+      // Asociar categorías (muchos a muchos)
       await producto.setCategorias(categorias);
 
-      // Traer producto con categorías para respuesta
+      // Obtener el producto con categorías para respuesta
       const productoConCategorias = await Producto.findByPk(producto.id, {
         include: { model: Categoria, as: 'categorias' },
       });
-
+      //Respuesta del cliente
       res.status(201).json(productoConCategorias);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  // Obtener todos los productos con categorías
-  obtenerProductos: async (req, res) => {
-    try {
-      const productos = await Producto.findAll({
-        include: { model: Categoria, as: 'categorias' },
-      });
-      res.json(productos);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+// 2.Endpoint para actualizar un producto
+actualizarProducto: async (req, res) => {
+  const { nombre, descripcion, precio, categorias } = req.body;
+
+  try {
+    //Buscar el producto por su ID
+    const producto = await Producto.findByPk(req.params.id);
+
+    //Validar existencia
+    if (!producto) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
     }
-  },
 
-  // Obtener producto por id con categorías
-  obtenerProductoPorId: async (req, res) => {
-    try {
-      const producto = await Producto.findByPk(req.params.id, {
-        include: { model: Categoria, as: 'categorias' },
-      });
-      if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+    //Actualizar campos básicos
+    await producto.update({ nombre, descripcion, precio });
 
-      res.json(producto);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    //Actualizar categorías si se enviaron
+    if (categorias && Array.isArray(categorias)) {
+      await producto.setCategorias(categorias); // Actualiza relación muchos a muchos
     }
-  },
 
-  // Actualizar producto y categorías
-  actualizarProducto: async (req, res) => {
-    const { nombre, descripcion, precio, categorias } = req.body;
+    // Obtener el producto actualizado con sus categorías
+    const productoActualizado = await Producto.findByPk(req.params.id, {
+      include: { model: Categoria, as: 'categorias' },
+    });
 
-    try {
-      const producto = await Producto.findByPk(req.params.id);
-      if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+    //Responder con el producto actualizado
+    res.json(productoActualizado);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+},
 
-      await producto.update({ nombre, descripcion, precio });
-
-      if (categorias && Array.isArray(categorias)) {
-        await producto.setCategorias(categorias);
-      }
-
-      const productoActualizado = await Producto.findByPk(req.params.id, {
-        include: { model: Categoria, as: 'categorias' },
-      });
-
-      res.json(productoActualizado);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  // Eliminar producto
+//3.Endpoint para eliminar un producto
   eliminarProducto: async (req, res) => {
-    try {
-      const producto = await Producto.findByPk(req.params.id);
-      if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    //Buscar el producto por ID
+    const producto = await Producto.findByPk(req.params.id);
 
-      await producto.destroy();
-      res.json({ mensaje: 'Producto eliminado' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    //Validar si existe
+    if (!producto) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
     }
-  },
+
+    //Eliminar el producto (y sus asociaciones si están definidas con ON DELETE CASCADE)
+    await producto.destroy();
+
+    //Responder al cliente
+    res.json({ mensaje: 'Producto eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+},  
+
+//4. Endpoint de traer productos debe mostrarse junto a la categoría o categorías que pertenece
+obtenerProductos: async (req, res) => {
+  try {
+    // Traer todos los productos incluyendo sus categorías relacionadas
+    const productos = await Producto.findAll({
+      include: {
+        model: Categoria,
+        as: 'categorias', // nombre de la relación en tu modelo
+        through: { attributes: [] } // opcional: para no mostrar tabla intermedia en la respuesta
+      }
+    });
+    res.json(productos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 };
+
+
+
+
+

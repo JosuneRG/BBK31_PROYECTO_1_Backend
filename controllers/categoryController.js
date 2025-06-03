@@ -34,7 +34,7 @@ crearTablaCategorias: async (req, res) => {
     }
   },
 
-  // Obtener todas las categorías con sus productos
+  //1. Obtener todas las categorías con sus productos
   obtenerCategorias: async (req, res) => {
     try {
       const categorias = await Categoria.findAll({
@@ -46,7 +46,7 @@ crearTablaCategorias: async (req, res) => {
     }
   },
 
-  // Obtener categoría por id con productos
+  // 2.Obtener categoría por id con productos
   obtenerCategoriaPorId: async (req, res) => {
     try {
       const categoria = await Categoria.findByPk(req.params.id, {
