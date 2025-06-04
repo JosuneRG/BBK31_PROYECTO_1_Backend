@@ -1,4 +1,4 @@
-// Endpoint para registrar un usuario utilizando bcrypt
+// 1 - Endpoint para registrar un usuario utilizando bcrypt
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
 
