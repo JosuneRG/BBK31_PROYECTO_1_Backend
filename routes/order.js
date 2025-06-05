@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
+const orderController = require('../controllers/orderController');
 
-// Endpoint para registro
-router.post('/order', userController.register);
+// Ver pedidos con productos
+router.get('/', orderController.getOrdersWithProducts);
+
+// Crear pedido
+router.post('/', orderController.addOrder);
 
 module.exports = router;

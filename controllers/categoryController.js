@@ -1,9 +1,9 @@
-const { Categoria, Producto } = require('../models');
+const { Category, Product } = require('../models');
 const { sequelize } = require('../models');
 
-module.exports = {
-    //Crear tabla Category con SQL
-crearTablaCategorias: async (req, res) => {
+const categoryController = {
+  // Crear tabla Category con SQL (opcional si usas Sequelize migrations)
+  crearTablaCategorias: async (req, res) => {
     const sql = `
       CREATE TABLE IF NOT EXISTS Category (
         category_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,23 +22,27 @@ crearTablaCategorias: async (req, res) => {
 
   // Crear categoría
   crearCategoria: async (req, res) => {
-    const { nombre } = req.body;
+    const { name, description } = req.body;
 
-    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    if (!name) return res.status(400).json({ error: 'El nombre es obligatorio' });
 
     try {
-      const categoria = await Categoria.create({ nombre });
+      const categoria = await Category.create({ name, description });
       res.status(201).json(categoria);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  //1. Obtener todas las categorías con sus productos
+  // 1. Obtener todas las categorías con sus productos
   obtenerCategorias: async (req, res) => {
     try {
-      const categorias = await Categoria.findAll({
-        include: { model: Producto, as: 'productos' },
+      const categorias = await Category.findAll({
+        include: {
+          model: Product,
+          as: 'products',
+          through: { attributes: [] }
+        }
       });
       res.json(categorias);
     } catch (error) {
@@ -46,12 +50,17 @@ crearTablaCategorias: async (req, res) => {
     }
   },
 
-  // 2.Obtener categoría por id con productos
+  // 2. Obtener categoría por ID con productos
   obtenerCategoriaPorId: async (req, res) => {
     try {
-      const categoria = await Categoria.findByPk(req.params.id, {
-        include: { model: Producto, as: 'productos' },
+      const categoria = await Category.findByPk(req.params.id, {
+        include: {
+          model: Product,
+          as: 'products',
+          through: { attributes: [] }
+        }
       });
+
       if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
       res.json(categoria);
@@ -62,13 +71,13 @@ crearTablaCategorias: async (req, res) => {
 
   // Actualizar categoría
   actualizarCategoria: async (req, res) => {
-    const { nombre } = req.body;
+    const { name, description } = req.body;
 
     try {
-      const categoria = await Categoria.findByPk(req.params.id);
+      const categoria = await Category.findByPk(req.params.id);
       if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
-      await categoria.update({ nombre });
+      await categoria.update({ name, description });
       res.json(categoria);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -78,7 +87,7 @@ crearTablaCategorias: async (req, res) => {
   // Eliminar categoría
   eliminarCategoria: async (req, res) => {
     try {
-      const categoria = await Categoria.findByPk(req.params.id);
+      const categoria = await Category.findByPk(req.params.id);
       if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
       await categoria.destroy();
@@ -86,6 +95,7 @@ crearTablaCategorias: async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  },
+  }
+};
 
-}
+module.exports = categoryController;

@@ -1,15 +1,14 @@
-const { Producto, Categoria } = require('../models');
+const { Product, Category } = require('../models');
 const { sequelize } = require('../models');
 
 
-module.exports = {
+const productController  = {
 //Obtener producto por ID con categorias
-  obtenerProductoPorId: async (req, res) => {
+ async obtenerProductoPorId(req, res) {
     try {
-      const producto = await Producto.findByPk(req.params.id, {
+      const producto = await Product.findByPk(req.params.id, {
         include: {
-          model: Categoria,
-          as: 'categorias',
+          model: Category,
           through: { attributes: [] }
         }
       });
@@ -23,8 +22,9 @@ module.exports = {
       res.status(500).json({ error: error.message });
     }
   },
-//Crear la tabla product usando SQL
- crearTablaProductos: async (req, res) => {
+
+  // Crear la tabla Product usando SQL (opcional si usas Sequelize sync)
+  async crearTablaProductos(req, res) {
     const sql = `
       CREATE TABLE IF NOT EXISTS Product (
         product_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,103 +45,89 @@ module.exports = {
     }
   },
 
-// 1.Endpoint para crear producto 
-  crearProducto: async (req, res) => {
-    const { nombre, descripcion, precio, categorias } = req.body;
+  // Crear producto
+  async crearProducto(req, res) {
+    const { name, description, price, stock, categories } = req.body;
 
-    if (!nombre || !descripcion || !precio || !categorias || !Array.isArray(categorias)) {
-      return res.status(400).json({ error: 'Faltan campos o categorias no es un array' });
+    if (!name || !price || !stock || !categories || !Array.isArray(categories)) {
+      return res.status(400).json({ error: 'Faltan campos o categories no es un array' });
     }
 
     try {
-      //Crear el producto
-      const producto = await Producto.create({ nombre, descripcion, precio });
+      const producto = await Product.create({ name, description, price, stock });
+      await producto.setCategories(categories);
 
-      // Asociar categorías (muchos a muchos)
-      await producto.setCategorias(categorias);
-
-      // Obtener el producto con categorías para respuesta
-      const productoConCategorias = await Producto.findByPk(producto.id, {
-        include: { model: Categoria, as: 'categorias' },
+      const productoConCategorias = await Product.findByPk(producto.product_id, {
+        include: { model: Category, through: { attributes: [] } }
       });
-      //Respuesta del cliente
+
       res.status(201).json(productoConCategorias);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-// 2.Endpoint para actualizar un producto
-actualizarProducto: async (req, res) => {
-  const { nombre, descripcion, precio, categorias } = req.body;
+  // Actualizar producto
+  async actualizarProducto(req, res) {
+    const { name, description, price, stock, categories } = req.body;
 
-  try {
-    //Buscar el producto por su ID
-    const producto = await Producto.findByPk(req.params.id);
+    try {
+      const producto = await Product.findByPk(req.params.id);
 
-    //Validar existencia
-    if (!producto) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
-
-    //Actualizar campos básicos
-    await producto.update({ nombre, descripcion, precio });
-
-    //Actualizar categorías si se enviaron
-    if (categorias && Array.isArray(categorias)) {
-      await producto.setCategorias(categorias); // Actualiza relación muchos a muchos
-    }
-
-    // Obtener el producto actualizado con sus categorías
-    const productoActualizado = await Producto.findByPk(req.params.id, {
-      include: { model: Categoria, as: 'categorias' },
-    });
-
-    //Responder con el producto actualizado
-    res.json(productoActualizado);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-},
-
-//3.Endpoint para eliminar un producto
-  eliminarProducto: async (req, res) => {
-  try {
-    //Buscar el producto por ID
-    const producto = await Producto.findByPk(req.params.id);
-
-    //Validar si existe
-    if (!producto) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
-
-    //Eliminar el producto (y sus asociaciones si están definidas con ON DELETE CASCADE)
-    await producto.destroy();
-
-    //Responder al cliente
-    res.json({ mensaje: 'Producto eliminado correctamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-},  
-
-//4. Endpoint de traer productos debe mostrarse junto a la categoría o categorías que pertenece
-obtenerProductos: async (req, res) => {
-  try {
-    // Traer todos los productos incluyendo sus categorías relacionadas
-    const productos = await Producto.findAll({
-      include: {
-        model: Categoria,
-        as: 'categorias', // nombre de la relación en tu modelo
-        through: { attributes: [] } // opcional: para no mostrar tabla intermedia en la respuesta
+      if (!producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
       }
-    });
-    res.json(productos);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+      await producto.update({ name, description, price, stock });
+
+      if (categories && Array.isArray(categories)) {
+        await producto.setCategories(categories);
+      }
+
+      const productoActualizado = await Product.findByPk(req.params.id, {
+        include: { model: Category, through: { attributes: [] } }
+      });
+
+      res.json(productoActualizado);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Eliminar producto
+  async eliminarProducto(req, res) {
+    try {
+      const producto = await Product.findByPk(req.params.id);
+
+      if (!producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
+
+      await producto.destroy();
+      res.json({ mensaje: 'Producto eliminado correctamente' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Obtener todos los productos con sus categorías
+  async obtenerProductos(req, res) {
+    try {
+      const productos = await Product.findAll({
+        include: {
+          model: Category,
+          through: { attributes: [] }
+        }
+      });
+
+      res.json(productos);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-}
 };
+
+module.exports = productController;
 
 
 

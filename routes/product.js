@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const { authenticateToken } = require('./auth');
+const authenticateToken = require('../middleware/authenticateToken');
 const validateProduct = require('../middleware/validateProduct');
 
 
