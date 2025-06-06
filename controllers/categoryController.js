@@ -1,5 +1,6 @@
 const { Categoria, Producto } = require('../models');
 const { sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 module.exports = {
     //Crear tabla Category con SQL
@@ -22,12 +23,14 @@ crearTablaCategorias: async (req, res) => {
 
   // Crear categoría
   crearCategoria: async (req, res) => {
-    const { nombre } = req.body;
+    const { nombre, descripcion } = req.body;
 
-    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    if (!nombre || nombre.trim() === '') {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
 
     try {
-      const categoria = await Categoria.create({ nombre });
+      const categoria = await Categoria.create({ nombre, descripcion });
       res.status(201).json(categoria);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -52,6 +55,7 @@ crearTablaCategorias: async (req, res) => {
       const categoria = await Categoria.findByPk(req.params.id, {
         include: { model: Producto, as: 'productos' },
       });
+
       if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
       res.json(categoria);
@@ -59,16 +63,37 @@ crearTablaCategorias: async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   },
+ //3. Buscar categoría por nombre
+  buscarPorNombre: async (req, res) => {
+    const { nombre } = req.query;
 
+    if (!nombre || nombre.trim() === '') {
+      return res.status(400).json({ error: "El parámetro 'nombre' es obligatorio" });
+    }
+
+    try {
+      const categorias = await Categoria.findAll({
+        where: {
+          nombre: {
+            [Op.like]: `%${nombre}%`
+          }
+        }
+      });
+
+      res.json(categorias);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
   // Actualizar categoría
   actualizarCategoria: async (req, res) => {
-    const { nombre } = req.body;
+    const { nombre, descripcion } = req.body;
 
     try {
       const categoria = await Categoria.findByPk(req.params.id);
       if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
-      await categoria.update({ nombre });
+      await categoria.update({ nombre, descripcion });
       res.json(categoria);
     } catch (error) {
       res.status(500).json({ error: error.message });
