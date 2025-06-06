@@ -8,7 +8,7 @@ const isAdmin = require('../middleware/isAdmin');
 
 
 const {
-   crearProducto,
+  crearProducto,
   actualizarProducto,
   eliminarProducto,
   obtenerProductos,
