@@ -1,30 +1,30 @@
-const { Product, Category } = require('../models');
+const { product, category } = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require("sequelize");
 
-const productController  = {
-//Obtener producto por ID con categorias
- async obtenerProductoPorId(req, res) {
+const productController = {
+  //Obtener producto por ID con categorias
+  obtenerProductoPorId: async (req, res) => {
     try {
-      const producto = await Product.findByPk(req.params.id, {
+      const product = await product.findByPk(req.params.id, {
         include: {
           model: Category,
+          as: 'category',
           through: { attributes: [] }
         }
       });
 
-      if (!producto) {
+      if (!product) {
         return res.status(404).json({ error: 'Producto no encontrado' });
       }
 
-      res.json(producto);
+      res.json(product);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
-
-  // Crear la tabla Product usando SQL (opcional si usas Sequelize sync)
-  async crearTablaProductos(req, res) {
+  //Crear la tabla product usando SQL
+  crearTablaProductos: async (req, res) => {
     const sql = `
       CREATE TABLE IF NOT EXISTS Product (
         product_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,98 +45,208 @@ const productController  = {
     }
   },
 
-  // Crear producto
-  async crearProducto(req, res) {
-    const { name, description, price, stock, categories } = req.body;
+  // 1.Endpoint para crear producto 
+  crearProducto: async (req, res) => {
+    const { name, description, price, categories } = req.body;
 
-    if (!name || !price || !stock || !categories || !Array.isArray(categories)) {
-      return res.status(400).json({ error: 'Faltan campos o categories no es un array' });
+    // Improved validation
+    if (
+      !name || typeof name !== 'string' || name.trim() === '' ||
+      !description || typeof description !== 'string' || description.trim() === '' ||
+      !price || isNaN(price) ||
+      !categories || !Array.isArray(categories) || categories.length === 0
+    ) {
+      return res.status(400).json({
+        error: 'Error: All fields are required: name (string), description (string), price (number), categories (non-empty array).'
+      });
     }
 
     try {
-      const producto = await Product.create({ name, description, price, stock });
-      await producto.setCategories(categories);
+      const product = await Product.create({ name, description, price });
+      await product.setCategories(categories);
 
-      const productoConCategorias = await Product.findByPk(producto.product_id, {
-        include: { model: Category, through: { attributes: [] } }
+      const productWithCategories = await Product.findByPk(product.id, {
+        include: { model: Category, as: 'categories' },
       });
 
-      res.status(201).json(productoConCategorias);
+      res.status(201).json(productWithCategories);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  // Actualizar producto
-  async actualizarProducto(req, res) {
-    const { name, description, price, stock, categories } = req.body;
+  // 2.Endpoint para actualizar un producto
+  actualizarProducto: async (req, res) => {
+    const { name, description, price, categories } = req.body;
 
     try {
-      const producto = await Product.findByPk(req.params.id);
+      // Find the product by ID
+      const product = await Product.findByPk(req.params.id);
 
-      if (!producto) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
+      // Validate existence
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
       }
-      if (!producto) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
-      }
 
-    //Actualizar campos básicos
-    await producto.update({ nombre, descripcion, precio });
+      // Update basic fields
+      await product.update({ name, description, price });
 
+      // Update categories if provided
       if (categories && Array.isArray(categories)) {
-        await producto.setCategories(categories);
+        await product.setCategories(categories); // Updates many-to-many relationship
       }
 
-      const productoActualizado = await Product.findByPk(req.params.id, {
-        include: { model: Category, through: { attributes: [] } }
+      // Fetch updated product with categories
+      const updatedProduct = await Product.findByPk(req.params.id, {
+        include: { model: Category, as: 'categories' },
       });
 
-      res.json(productoActualizado);
+      // Respond with updated product
+      res.json(updatedProduct);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+  //3.Endpoint para eliminar un producto
+  eliminarProducto: async (req, res) => {
+    try {
+      // Find the product by ID
+      const product = await Product.findByPk(req.params.id);
+
+      // Validate existence
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      // Delete the product (and its associations if defined with ON DELETE CASCADE)
+      await product.destroy();
+
+      // Respond to client
+      res.json({ message: 'Product successfully deleted' });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  // Eliminar producto
-  async eliminarProducto(req, res) {
+  //4. Endpoint de traer productos debe mostrarse junto a la categoría o categorías que pertenece
+  obtenerProductos: async (req, res) => {
     try {
-      const producto = await Product.findByPk(req.params.id);
-
-      if (!producto) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
-      }
-      if (!producto) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
-      }
-
-      await producto.destroy();
-      res.json({ mensaje: 'Producto eliminado correctamente' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  // Obtener todos los productos con sus categorías
-  async obtenerProductos(req, res) {
-    try {
-      const productos = await Product.findAll({
+      // Fetch all products including their related categories
+      const products = await Product.findAll({
         include: {
           model: Category,
+          as: 'categories', // name of the association in your model
+          through: { attributes: [] } // optional: exclude join table data from response
+        }
+      });
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  //5. Filtro para buscar producto por nombreEndpoint que traiga un producto por su id  // GET /productos?nombre=xxx
+  buscarPorNombre: async (req, res) => {
+    try {
+      const name = req.query.name;
+
+      if (!name) {
+        return res.status(400).json({ message: "Missing 'name' query parameter" });
+      }
+
+      const products = await Product.findAll({
+        where: {
+          name: {
+            [Op.like]: `%${name}%`
+          }
+        },
+        include: {
+          model: Category,
+          as: 'categories',
           through: { attributes: [] }
         }
       });
 
-      res.json(productos);
+      res.json(products);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: "Error searching products", error });
+    }
+  },
+
+  // GET /productos/:id
+  obtenerProductoPorId: async (req, res) => {
+    try {
+      const product = await Product.findByPk(req.params.id, {
+        include: {
+          model: Category,
+          as: 'categories',
+          through: { attributes: [] }
+        }
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching product", error });
+    }
+  },
+
+  //6. Filtro para buscar producto por precio
+  buscarPorPrecio: async (req, res) => {
+    const { price, minPrice, maxPrice } = req.query;
+    const where = {};
+
+    if (price) {
+      where.price = price;
+    } else {
+      if (minPrice) {
+        where.price = { [Op.gte]: parseFloat(minPrice) };
+      }
+
+      if (maxPrice) {
+        where.price = {
+          ...(where.price || {}),
+          [Op.lte]: parseFloat(maxPrice)
+        };
+      }
+    }
+
+    try {
+      const products = await Product.findAll({
+        where,
+        include: {
+          model: Category,
+          as: 'categories',
+          through: { attributes: [] }
+        }
+      });
+
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ message: "Error filtering products by price", error });
+    }
+  },
+
+  //7. Filtro que ordene los productos de mayor a menor precio
+  ordenarPorPrecioDesc: async (req, res) => {
+    try {
+      const products = await Product.findAll({
+        order: [['price', 'DESC']],  // descending order by price
+        include: {
+          model: Category,
+          as: 'categories',
+          through: { attributes: [] }
+        }
+      });
+
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ message: "Error retrieving sorted products", error });
     }
   }
-};
+};  // <-- cierre final del objeto module.exports
 
 module.exports = productController;
-
-
-
-
-
