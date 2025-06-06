@@ -1,6 +1,6 @@
 const { Product, Category } = require('../models');
 const { sequelize } = require('../models');
-
+const { Op } = require("sequelize");
 
 const productController  = {
 //Obtener producto por ID con categorias
@@ -77,8 +77,12 @@ const productController  = {
       if (!producto) {
         return res.status(404).json({ error: 'Producto no encontrado' });
       }
+      if (!producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
 
-      await producto.update({ name, description, price, stock });
+    //Actualizar campos básicos
+    await producto.update({ nombre, descripcion, precio });
 
       if (categories && Array.isArray(categories)) {
         await producto.setCategories(categories);
@@ -99,6 +103,9 @@ const productController  = {
     try {
       const producto = await Product.findByPk(req.params.id);
 
+      if (!producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
       if (!producto) {
         return res.status(404).json({ error: 'Producto no encontrado' });
       }

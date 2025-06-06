@@ -1,5 +1,6 @@
 const { Category, Product } = require('../models');
 const { sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 const categoryController = {
   // Crear tabla Category con SQL (opcional si usas Sequelize migrations)
@@ -22,6 +23,7 @@ const categoryController = {
 
   // Crear categoría
   crearCategoria: async (req, res) => {
+    const { nombre, descripcion } = req.body;
     const { name, description } = req.body;
 
     if (!name) return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -68,10 +70,31 @@ const categoryController = {
       res.status(500).json({ error: error.message });
     }
   },
+ //3. Buscar categoría por nombre
+  buscarPorNombre: async (req, res) => {
+    const { nombre } = req.query;
 
+    if (!nombre || nombre.trim() === '') {
+      return res.status(400).json({ error: "El parámetro 'nombre' es obligatorio" });
+    }
+
+    try {
+      const categorias = await Categoria.findAll({
+        where: {
+          nombre: {
+            [Op.like]: `%${nombre}%`
+          }
+        }
+      });
+
+      res.json(categorias);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
   // Actualizar categoría
   actualizarCategoria: async (req, res) => {
-    const { name, description } = req.body;
+    const { nombre } = req.body;
 
     try {
       const categoria = await Category.findByPk(req.params.id);

@@ -4,24 +4,23 @@ const productController = require('../controllers/productController');
 const authenticateToken = require('../middleware/authenticateToken');
 const validateProduct = require('../middleware/validateProduct');
 
-
-//Ruta para crear la tabla 'Product' directamente con SQL
+// Ruta para crear la tabla 'Product' directamente con SQL (pública)
 router.get('/crear-tabla', productController.crearTablaProductos);
 
-// Crear producto
-router.post('/', authenticateToken, validateProduct, productController.crearProducto);
+// Filtros y ordenamientos protegidos (requieren autenticación)
+router.get('/filtro/precio', authenticateToken, productController.buscarPorPrecio);
+router.get('/ordenar/precio-desc', authenticateToken, productController.ordenarPorPrecioDesc);
 
+// Buscar productos por nombre (query ?nombre=xxx) - protegido
+router.get('/buscar', authenticateToken, productController.buscarPorNombre);
 
-// Obtener todos los productos con categorías
+// Rutas públicas para obtener productos
 router.get('/', productController.obtenerProductos);
-
-// Obtener producto por id
 router.get('/:id', productController.obtenerProductoPorId);
 
-// Actualizar producto por id
-router.put('/:id', productController.actualizarProducto);
-
-// Eliminar producto por id
-router.delete('/:id', productController.eliminarProducto);
+// Rutas protegidas para crear, actualizar y eliminar productos
+router.post('/', authenticateToken, validateProduct, productController.crearProducto);
+router.put('/:id', authenticateToken, validateProduct, productController.actualizarProducto);
+router.delete('/:id', authenticateToken, productController.eliminarProducto);
 
 module.exports = router;
