@@ -10,6 +10,7 @@ app.use('/productos', require('./routes/product'));
 app.use('/users', require('./routes/user'));         
 app.use('/categories', require('./routes/category'));
 app.use('/pedidos', require('./routes/order'));
+app.use('/reviews', require('./routes/reviews'));
 
 // Revisa estas rutas
 console.log('Category route:', require('./routes/category'));

@@ -1,6 +1,46 @@
 const { product, category } = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require("sequelize");
+const { Product, Category, Review, User } = require('../models');
+
+const obtenerProductos = async (req, res) => {
+  try {
+    const productos = await Product.findAll({
+      include: [
+        { model: Category },
+        {
+          model: Review,
+          include: [{ model: User, attributes: ['name', 'email'] }]
+        }
+      ]
+    });
+    res.json(productos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const obtenerProductoPorId = async (req, res) => {
+  try {
+    const producto = await Product.findByPk(req.params.id, {
+      include: [
+        { model: Category },
+        {
+          model: Review,
+          include: [{ model: User, attributes: ['name', 'email'] }]
+        }
+      ]
+    });
+
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    res.json(producto);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 const productController = {
   //Obtener producto por ID con categorias
